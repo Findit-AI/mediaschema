@@ -22,6 +22,7 @@
 //! - **`core::error::Error`**, not `std::error::Error` — stable since
 //!   1.81, MSRV is 1.85.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use core::{fmt, str::FromStr};

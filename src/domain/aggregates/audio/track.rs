@@ -16,6 +16,7 @@
 //! `audio::Fingerprint`, `audio::Tags`, `audio::CoverArt`) likewise live
 //! in `mediaframe`. These are wired through directly.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

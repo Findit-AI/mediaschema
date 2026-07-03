@@ -8,6 +8,7 @@
 //! ships no `DataCodec`, so `codec` / `codec_tag` are plain [`SmolStr`]
 //! slugs (`""` = unknown / absent).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;
