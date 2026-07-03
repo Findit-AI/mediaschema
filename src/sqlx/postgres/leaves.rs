@@ -441,7 +441,7 @@ pub struct PgWatchedLocationRow {
   pub last_error_message: Option<String>,
 }
 
-fn scan_status_to_i16(s: ScanStatus) -> i16 {
+pub(crate) fn scan_status_to_i16(s: ScanStatus) -> i16 {
   match s {
     ScanStatus::Ok => 0,
     ScanStatus::Partial => 1,
@@ -449,7 +449,7 @@ fn scan_status_to_i16(s: ScanStatus) -> i16 {
   }
 }
 
-fn scan_status_from_i16(n: i16) -> Result<ScanStatus, SqlxError> {
+pub(crate) fn scan_status_from_i16(n: i16) -> Result<ScanStatus, SqlxError> {
   match n {
     0 => Ok(ScanStatus::Ok),
     1 => Ok(ScanStatus::Partial),

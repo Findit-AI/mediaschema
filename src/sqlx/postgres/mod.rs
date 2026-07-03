@@ -28,6 +28,7 @@ pub mod subtitle;
 #[cfg(feature = "video")]
 #[cfg_attr(docsrs, doc(cfg(feature = "video")))]
 pub mod video;
+pub mod watch_root;
 
 pub use attachment::{
   attachment_track_from_rows, PgAttachmentRow, PgAttachmentTrackIndexErrorRow,
@@ -66,6 +67,7 @@ pub use video::{
   PgKeyframeVlmLabelRow, PgSceneRow, PgVideoRow, PgVideoTrackIndexErrorRow,
   PgVideoTrackMetadataRow, PgVideoTrackRow,
 };
+pub use watch_root::{PgWatchRootRow, PgWatchRootRowRef};
 
 /// Canonical PostgreSQL DDL for the mediaschema tables this revision maps.
 pub const SCHEMA_SQL: &str = include_str!("schema.sql");
@@ -73,9 +75,12 @@ pub const SCHEMA_SQL: &str = include_str!("schema.sql");
 /// Initial migration mirror of [`SCHEMA_SQL`].
 pub const MIGRATION_0001_INIT: &str = include_str!("migrations/0001_init.sql");
 
+/// Additive migration that creates the `watch_root` table.
+pub const MIGRATION_0003_WATCH_ROOT: &str = include_str!("migrations/0003_watch_root.sql");
+
 #[cfg(all(test, feature = "video"))]
 mod schema_tests {
-  use super::{MIGRATION_0001_INIT, SCHEMA_SQL};
+  use super::{MIGRATION_0001_INIT, MIGRATION_0003_WATCH_ROOT, SCHEMA_SQL};
 
   #[test]
   fn schema_has_thumbnail_table_and_keyframe_fk() {
@@ -111,13 +116,20 @@ mod schema_tests {
 
   #[test]
   fn migration_mirror_matches_schema() {
-    assert_eq!(SCHEMA_SQL, MIGRATION_0001_INIT);
+    // 0001 is the frozen baseline; 0003 adds the watch_root table.
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    // schema.sql is the exact composition of 0001 + separator + 0003.
+    assert_eq!(
+      SCHEMA_SQL,
+      format!("{MIGRATION_0001_INIT}\n{MIGRATION_0003_WATCH_ROOT}")
+    );
   }
 }
 
 #[cfg(test)]
 mod data_schema_tests {
-  use super::{MIGRATION_0001_INIT, SCHEMA_SQL};
+  use super::{MIGRATION_0001_INIT, MIGRATION_0003_WATCH_ROOT, SCHEMA_SQL};
 
   #[test]
   fn schema_has_data_cluster_tables() {
@@ -146,6 +158,12 @@ mod data_schema_tests {
 
   #[test]
   fn data_migration_mirror_matches_schema() {
-    assert_eq!(SCHEMA_SQL, MIGRATION_0001_INIT);
+    // 0001 is the frozen baseline; 0003 adds the watch_root table.
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert_eq!(
+      SCHEMA_SQL,
+      format!("{MIGRATION_0001_INIT}\n{MIGRATION_0003_WATCH_ROOT}")
+    );
   }
 }
