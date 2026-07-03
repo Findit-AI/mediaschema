@@ -92,6 +92,20 @@ Indexes: `media_id`, `watched_location_id`.
 
 Indexes: `volume`, `enabled`.
 
+### `watch_roots`
+
+| field | type |
+| --- | --- |
+| `_id` | `Binary(uuid)` |
+| `location` | embedded `{kind, volume, components}` sub-document |
+| `recursive` | `Boolean` |
+| `enabled` | `Boolean` |
+| `added_at` | `DateTime` |
+| `last_walked_at` | `DateTime` or `Null` |
+| `walk_status` | `Int32` (`0=Ok / 1=Partial / 2=Failed`) or `Null` |
+
+Indexes: unique `(location.volume, location.components)`, `enabled`.
+
 ### `speakers`
 
 | field | type |

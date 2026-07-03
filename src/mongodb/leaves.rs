@@ -20,7 +20,7 @@ use super::{error::MongoError, util::*};
 // `ScanStatus` ↔ Int32 (0/1/2)
 // ---------------------------------------------------------------------------
 
-fn scan_status_to_i32(s: ScanStatus) -> i32 {
+pub(super) fn scan_status_to_i32(s: ScanStatus) -> i32 {
   match s {
     ScanStatus::Ok => 0,
     ScanStatus::Partial => 1,
@@ -28,7 +28,7 @@ fn scan_status_to_i32(s: ScanStatus) -> i32 {
   }
 }
 
-fn scan_status_from_i64(v: i64, field: &'static str) -> Result<ScanStatus, MongoError> {
+pub(super) fn scan_status_from_i64(v: i64, field: &'static str) -> Result<ScanStatus, MongoError> {
   match v {
     0 => Ok(ScanStatus::Ok),
     1 => Ok(ScanStatus::Partial),

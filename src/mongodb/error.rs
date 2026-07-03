@@ -14,6 +14,7 @@ use crate::domain::{
     curation::{NilIdError, SceneAnnotationError},
     media::MediaError,
     speaker::SpeakerError,
+    watch_root::WatchRootError,
     watched_location::WatchedLocationError,
   },
   primitives::{LocationError, Uuid7Error},
@@ -110,6 +111,8 @@ pub enum MongoError {
   DomainConstructorRejected(String),
   #[error("WatchedLocation try_new rejected: {0}")]
   WatchedLocation(#[from] WatchedLocationError),
+  #[error("WatchRoot try_new rejected: {0}")]
+  WatchRoot(#[from] WatchRootError),
   #[error("Speaker try_new rejected: {0}")]
   Speaker(#[from] SpeakerError),
   #[error("id rejected: {0}")]

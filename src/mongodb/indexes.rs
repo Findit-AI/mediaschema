@@ -23,6 +23,7 @@ pub enum CollectionName {
   MediaFiles,
   Chapters,
   WatchedLocations,
+  WatchRoots,
   Speakers,
   Persons,
   UserTags,
@@ -77,6 +78,7 @@ impl CollectionName {
       Self::MediaFiles => "media_files",
       Self::Chapters => "chapters",
       Self::WatchedLocations => "watched_locations",
+      Self::WatchRoots => "watch_roots",
       Self::Speakers => "speakers",
       Self::Persons => "persons",
       Self::UserTags => "user_tags",
@@ -219,6 +221,18 @@ pub fn watched_location_indexes() -> Vec<IndexModel> {
   vec![
     index_on(doc! { "volume": 1 }, "watched_volume"),
     index_on(doc! { "enabled": 1 }, "watched_enabled"),
+  ]
+}
+
+/// `watch_roots` — config table. Unique on the watched location; `enabled`
+/// for the startup resume sweep.
+pub fn watch_root_indexes() -> Vec<IndexModel> {
+  vec![
+    unique_on(
+      doc! { "location.volume": 1, "location.components": 1 },
+      "watch_root_location",
+    ),
+    index_on(doc! { "enabled": 1 }, "watch_root_enabled"),
   ]
 }
 
@@ -545,6 +559,7 @@ pub fn all_indexes() -> Vec<(CollectionName, Vec<IndexModel>)> {
     (CollectionName::MediaFiles, media_file_indexes()),
     (CollectionName::Chapters, chapter_indexes()),
     (CollectionName::WatchedLocations, watched_location_indexes()),
+    (CollectionName::WatchRoots, watch_root_indexes()),
     (CollectionName::Speakers, speaker_indexes()),
     (CollectionName::Persons, person_indexes()),
     (CollectionName::UserTags, user_tag_indexes()),
@@ -620,10 +635,10 @@ mod tests {
   #[test]
   fn all_indexes_covers_every_collection() {
     let v = all_indexes();
-    // 8 always-on (Media + MediaFiles + Chapters + WatchedLocations +
-    // Speakers + Persons + UserTags + SceneAnnotations), plus 4 audio,
-    // 4 video, 12 subtitle when those features are on.
-    let mut expected = 8usize;
+    // 9 always-on (Media + MediaFiles + Chapters + WatchedLocations +
+    // WatchRoots + Speakers + Persons + UserTags + SceneAnnotations),
+    // plus 4 audio, 4 video, 12 subtitle when those features are on.
+    let mut expected = 9usize;
     if cfg!(feature = "audio") {
       expected += 4;
     }
