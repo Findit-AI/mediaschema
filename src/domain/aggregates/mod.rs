@@ -50,6 +50,7 @@ pub mod subtitle;
 #[cfg(all(feature = "std", feature = "video"))]
 #[cfg_attr(docsrs, doc(cfg(all(feature = "std", feature = "video"))))]
 pub mod video;
+pub mod watch_root;
 pub mod watched_location;
 
 #[cfg(feature = "std")]
@@ -77,4 +78,5 @@ pub use subtitle::{
 };
 #[cfg(all(feature = "std", feature = "video"))]
 pub use video::{Keyframe, Scene, Thumbnail, ThumbnailError, Video, VideoTrack};
+pub use watch_root::{WatchRoot, WatchRootError};
 pub use watched_location::WatchedLocation;
