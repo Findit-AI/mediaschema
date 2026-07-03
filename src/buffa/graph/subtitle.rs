@@ -136,7 +136,7 @@ impl From<&graph::SubtitleTrack<Uuid7>> for wire::SubtitleTrack {
       format: MessageField::some(g.format_ref().clone()),
       origin: MessageField::some(*g.origin_ref()),
       language: MessageField::some(*g.language_ref()),
-      title: SmolStr::from(g.title()),
+      title: SmolStr::from(g.title()).into(),
       disposition: MessageField::some(g.disposition()),
       is_primary: g.is_primary(),
       auto_selected: g.auto_selected(),
@@ -145,7 +145,7 @@ impl From<&graph::SubtitleTrack<Uuid7>> for wire::SubtitleTrack {
       cues: g.cues_slice().iter().map(wire::SubtitleCue::from).collect(),
       provenance: provenance_to_wire(g.provenance_ref()),
       source_checksum: g.source_checksum_ref().map(checksum_to_wire),
-      character_encoding: SmolStr::from(g.character_encoding()),
+      character_encoding: SmolStr::from(g.character_encoding()).into(),
       bom_present: g.bom_present(),
       is_sdh: g.is_sdh(),
       is_closed_caption: g.is_closed_caption(),
@@ -413,7 +413,7 @@ mod tests {
     let g = graph::SubtitleTrack::try_from_flat(&subtitle_id, rich_track(subtitle_id), vec![])
       .expect("coherent");
     let mut w = wire::SubtitleTrack::from(&g);
-    w.kind = SmolStr::from("karaoke");
+    w.kind = SmolStr::from("karaoke").into();
     let err = graph::SubtitleTrack::try_from(&w).unwrap_err();
     assert!(err.is_domain_constructor_rejected());
   }

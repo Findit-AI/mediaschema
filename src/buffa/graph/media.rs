@@ -241,7 +241,7 @@ impl From<&graph::Chapter<Uuid7>> for wire::Chapter {
       index: g.index(),
       source_id: g.source_id(),
       time_range: MessageField::some(*g.time_range_ref()),
-      title: SmolStr::from(g.title()),
+      title: SmolStr::from(g.title()).into(),
       metadata: metadata_to_wire(g.metadata_ref()),
       __buffa_unknown_fields: Default::default(),
     }

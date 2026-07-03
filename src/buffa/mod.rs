@@ -169,6 +169,7 @@ pub mod media;
 pub mod media_file;
 pub mod person;
 pub mod primitives;
+pub mod smol_str_field;
 pub mod speaker;
 #[cfg(feature = "subtitle")]
 #[cfg_attr(docsrs, doc(cfg(feature = "subtitle")))]
@@ -178,3 +179,4 @@ pub mod voice_fingerprint;
 pub mod watched_location;
 
 pub use error::BuffaError;
+pub use smol_str_field::SmolStrField;

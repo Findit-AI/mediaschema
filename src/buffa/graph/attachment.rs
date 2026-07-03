@@ -50,9 +50,9 @@ use crate::{
 impl From<&BlobRef> for wire::BlobRef {
   fn from(b: &BlobRef) -> Self {
     wire::BlobRef {
-      uri: SmolStr::from(b.uri()),
+      uri: SmolStr::from(b.uri()).into(),
       byte_size: b.byte_size(),
-      content_type: SmolStr::from(b.content_type()),
+      content_type: SmolStr::from(b.content_type()).into(),
       __buffa_unknown_fields: Default::default(),
     }
   }
@@ -117,9 +117,9 @@ impl From<&graph::AttachmentTrack<Uuid7>> for wire::AttachmentTrack {
     wire::AttachmentTrack {
       id: id_to_wire(g.id_ref()),
       stream_index: g.stream_index(),
-      codec: SmolStr::from(g.codec()),
-      filename: SmolStr::from(g.filename()),
-      mimetype: SmolStr::from(g.mimetype()),
+      codec: SmolStr::from(g.codec()).into(),
+      filename: SmolStr::from(g.filename()).into(),
+      mimetype: SmolStr::from(g.mimetype()).into(),
       byte_size: g.byte_size(),
       disposition: MessageField::some(g.disposition()),
       metadata: metadata_to_wire(g.metadata_ref()),

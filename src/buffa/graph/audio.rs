@@ -137,7 +137,7 @@ impl From<&graph::AudioTrack<Uuid7>> for wire::AudioTrack {
       stream_index: g.stream_index(),
       container_track_id: g.container_track_id(),
       codec: g.codec_ref().as_str().into(),
-      profile: SmolStr::from(g.profile()),
+      profile: SmolStr::from(g.profile()).into(),
       sample_rate: g.sample_rate(),
       channels: u32::from(g.channels()),
       channel_layout: MessageField::some(g.channel_layout_ref().clone()),
@@ -153,15 +153,15 @@ impl From<&graph::AudioTrack<Uuid7>> for wire::AudioTrack {
       disposition: MessageField::some(g.disposition()),
       is_primary: g.is_primary(),
       auto_selected: g.auto_selected(),
-      content: g.content().map(|k| SmolStr::from(k.as_str())),
+      content: g.content().map(|k| SmolStr::from(k.as_str()).into()),
       speech_ratio: g.speech_ratio(),
       is_silent: g.is_silent(),
       loudness: opt_msg(g.loudness_ref().copied()),
       replay_gain: opt_msg(g.replay_gain_ref().copied()),
       fingerprint: opt_msg(g.fingerprint_ref().cloned()),
-      isrc: SmolStr::from(g.isrc()),
-      acoustid: SmolStr::from(g.acoustid()),
-      musicbrainz_recording_id: SmolStr::from(g.musicbrainz_recording_id()),
+      isrc: SmolStr::from(g.isrc()).into(),
+      acoustid: SmolStr::from(g.acoustid()).into(),
+      musicbrainz_recording_id: SmolStr::from(g.musicbrainz_recording_id()).into(),
       speakers: g.speakers_slice().iter().map(wire::Speaker::from).collect(),
       tags: opt_msg(g.tags_ref().cloned()),
       cover_art: opt_msg(g.cover_art_ref().cloned()),
@@ -376,7 +376,7 @@ impl From<&graph::SoundEvent<Uuid7>> for wire::SoundEvent {
       id: id_to_wire(g.id_ref()),
       index: g.index(),
       span: MessageField::some(*g.span_ref()),
-      label: SmolStr::from(g.label()),
+      label: SmolStr::from(g.label()).into(),
       code: g.code(),
       score: g.score(),
       __buffa_unknown_fields: Default::default(),
@@ -429,7 +429,7 @@ impl From<&graph::Speaker<Uuid7>> for wire::Speaker {
     wire::Speaker {
       id: id_to_wire(g.id_ref()),
       cluster_id: g.cluster_id(),
-      name: SmolStr::from(g.name()),
+      name: SmolStr::from(g.name()).into(),
       speech_duration: opt_msg(g.speech_duration_ref().copied()),
       voiceprint: voice_fingerprint_to_wire(g.voiceprint_ref()),
       person_id: g.person_id_ref().map(id_to_wire),
@@ -680,7 +680,7 @@ mod tests {
       graph::AudioTrack::try_from_flat(&audio_id, rich_track(audio_id), vec![], vec![], vec![])
         .expect("coherent");
     let mut w = wire::AudioTrack::from(&g);
-    w.content = Some(SmolStr::from("polka"));
+    w.content = Some(SmolStr::from("polka").into());
     let err = graph::AudioTrack::try_from(&w).unwrap_err();
     assert!(err.is_domain_constructor_rejected());
   }

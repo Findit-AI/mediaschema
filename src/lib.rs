@@ -83,11 +83,12 @@
 #[allow(unused_extern_crates)]
 extern crate alloc as std;
 
-// Wire layer (buffa-generated) is `std`-only. The codegen uses `Vec` /
-// `String` (need alloc) AND the buffa runtime utilities pull in std
-// path types — gating the whole module on `feature = "std"` is the
-// simplest correct shape.
-#[cfg(feature = "buffa")]
+// The generated `string` fields are typed `crate::buffa::SmolStrField` (see
+// `xtask/src/main.rs`'s `string_type_custom`), so this module has a hard
+// dependency on `mod buffa` below — its gate must be at least as strict as
+// that module's (`buffa` alone is not enough; some heap tier is required for
+// `smol_str::SmolStr`).
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 #[allow(warnings, clippy::all)]
 mod generated {
   include!("generated/mod.rs");
@@ -177,31 +178,31 @@ pub mod mongodb;
 // SP2 database-domain types (same media.v1 package since mono-consolidation).
 // SP3 network-domain types (same media.v1 package since mono-consolidation).
 /// Oneof variant for [`Event`]: the `kind` discriminant arm.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::event::Kind as EventKind;
 /// Oneof variant for [`Location`]: `Kind::Local(…)`.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::location::Kind as LocationKind;
 /// Oneof variant for [`LocationTarget`]: `Kind::Local(…)`.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::location_target::Kind as LocationTargetKind;
 /// Oneof variant for [`MediaKind`]: `Kind::Video(…)` or `Kind::Audio(…)`.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::media_kind::Kind as MediaKindKind;
 /// Oneof variant for [`Request`]: the `kind` discriminant arm.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::request::Kind as RequestKind;
 /// Oneof variant for [`Response`]: the `kind` discriminant arm.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::response::Kind as ResponseKind;
 /// Oneof variant for [`SubtitleCue`]: the per-format `data` arm
 /// (`Data::Srt` / `Data::Vtt` / `Data::Ass` / `Data::Lrc`).
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::subtitle_cue::Data as SubtitleCueData;
 /// Oneof variant for [`SubtitleTrackOrigin`]: `Source::SourceAudioTrackId(…)` or `Source::SourceSubtitleTrackId(…)`.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::subtitle_track_origin::Source as SubtitleTrackOriginSource;
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::{
   ActionDetection, Aesthetics, AnimalAnalysis, AppPathBuf, Audio, AudioAnalysis,
   AudioChannelLayout, AudioChannelOrderKind, AudioChannelSpec, AudioClipKind, AudioCodec,
@@ -237,7 +238,7 @@ pub use generated::media::v1::{
 };
 /// Per-format subtitle-cue payload messages — the oneof arms of
 /// [`SubtitleCue.data`](SubtitleCue).
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::{
   AssData, AssStyle, LrcData, LrcMetadata, LrcWord, MicroDvdData, SamiData, SbvData, SubViewerData,
   TtmlData, VttData,
@@ -245,8 +246,8 @@ pub use generated::media::v1::{
 /// Per-track subtitle aggregate messages — WebVTT regions / style
 /// blocks (siblings of [`VttData`]), plus the TTML / SAMI sibling
 /// aggregates.
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::{SamiStyle, TtmlRegion, TtmlStyle, VttRegion, VttStyleBlock};
 /// WebVTT cue-setting enums (used by [`VttData`]).
-#[cfg(feature = "buffa")]
+#[cfg(all(feature = "buffa", any(feature = "std", feature = "alloc")))]
 pub use generated::media::v1::{VttLineAlign, VttPositionAlign, VttTextAlign, VttVertical};

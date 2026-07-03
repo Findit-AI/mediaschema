@@ -73,7 +73,13 @@ pub mod location_target {
     #[derive(Clone, PartialEq, Debug)]
     #[cfg_attr(feature = "arbitrary", derive(::arbitrary::Arbitrary))]
     pub enum Kind {
-        Local(::buffa::smol_str::SmolStr),
+        Local(
+            #[cfg_attr(
+                feature = "arbitrary",
+                arbitrary(with = ::buffa::__private::arbitrary_proto_string)
+            )]
+            crate::buffa::SmolStrField,
+        ),
     }
     impl ::buffa::Oneof for Kind {}
     #[cfg(feature = "json")]
@@ -102,14 +108,14 @@ pub mod subtitle_track_origin {
         SourceAudioTrackId(
             #[cfg_attr(
                 feature = "arbitrary",
-                arbitrary(with = ::buffa::__private::arbitrary_bytes)
+                arbitrary(with = ::buffa::__private::arbitrary_proto_bytes)
             )]
             ::buffa::bytes::Bytes,
         ),
         SourceSubtitleTrackId(
             #[cfg_attr(
                 feature = "arbitrary",
-                arbitrary(with = ::buffa::__private::arbitrary_bytes)
+                arbitrary(with = ::buffa::__private::arbitrary_proto_bytes)
             )]
             ::buffa::bytes::Bytes,
         ),
@@ -125,28 +131,16 @@ pub mod subtitle_track_origin {
             let mut map = s.serialize_map(Some(1))?;
             match self {
                 Self::SourceAudioTrackId(v) => {
-                    struct _W<'a>(&'a ::buffa::bytes::Bytes);
-                    impl serde::Serialize for _W<'_> {
-                        fn serialize<S2: serde::Serializer>(
-                            &self,
-                            s: S2,
-                        ) -> ::core::result::Result<S2::Ok, S2::Error> {
-                            ::buffa::json_helpers::bytes::serialize(self.0, s)
-                        }
-                    }
-                    map.serialize_entry("sourceAudioTrackId", &_W(v))?;
+                    map.serialize_entry(
+                        "sourceAudioTrackId",
+                        &::buffa::json_helpers::ProtoJson(v),
+                    )?;
                 }
                 Self::SourceSubtitleTrackId(v) => {
-                    struct _W<'a>(&'a ::buffa::bytes::Bytes);
-                    impl serde::Serialize for _W<'_> {
-                        fn serialize<S2: serde::Serializer>(
-                            &self,
-                            s: S2,
-                        ) -> ::core::result::Result<S2::Ok, S2::Error> {
-                            ::buffa::json_helpers::bytes::serialize(self.0, s)
-                        }
-                    }
-                    map.serialize_entry("sourceSubtitleTrackId", &_W(v))?;
+                    map.serialize_entry(
+                        "sourceSubtitleTrackId",
+                        &::buffa::json_helpers::ProtoJson(v),
+                    )?;
                 }
             }
             map.end()
