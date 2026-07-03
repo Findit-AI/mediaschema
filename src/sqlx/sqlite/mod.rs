@@ -26,6 +26,7 @@ pub mod thumbnail;
 #[cfg(feature = "video")]
 #[cfg_attr(docsrs, doc(cfg(feature = "video")))]
 pub mod video;
+pub mod watch_root;
 
 pub use attachment::{
   attachment_track_from_rows, SqliteAttachmentRow, SqliteAttachmentTrackIndexErrorRow,
@@ -71,6 +72,7 @@ pub use video::{
   SqliteKeyframeTextDetectionRow, SqliteKeyframeVlmLabelRow, SqliteSceneRow, SqliteVideoRow,
   SqliteVideoTrackIndexErrorRow, SqliteVideoTrackMetadataRow, SqliteVideoTrackRow,
 };
+pub use watch_root::SqliteWatchRootRow;
 
 /// Canonical SQLite DDL for the mediaschema tables this revision maps.
 ///
@@ -93,6 +95,11 @@ pub const MIGRATION_0001_INIT: &str = include_str!("migrations/0001_init.sql");
 /// create.
 pub const MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM: &str =
   include_str!("migrations/0002_provenance_backend_platform.sql");
+
+/// Additive migration: creates the `watch_root` table. Apply after
+/// [`MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM`] to upgrade an existing
+/// database; [`SCHEMA_SQL`] already includes the table for a fresh create.
+pub const MIGRATION_0003_WATCH_ROOT: &str = include_str!("migrations/0003_watch_root.sql");
 
 /// The lines present in the canonical [`SCHEMA_SQL`] but absent from the
 /// frozen `0001` baseline — i.e. the textual delta the additive `0002`
@@ -149,14 +156,14 @@ mod schema_tests {
     assert!(!SCHEMA_SQL.contains("scene_id                     BLOB    NOT NULL"));
   }
 
-  /// The `0001` baseline plus the additive `0002` columns compose to the
-  /// canonical [`SCHEMA_SQL`]. `0001` is frozen at the pre-provenance shape
-  /// (so already-migrated databases stay valid); `0002` adds exactly the
-  /// four provenance backend/platform columns; and the *only* schema lines
-  /// the canonical DDL has beyond the frozen baseline are that block —
-  /// every such line names one of the four new columns (or its comment).
+  /// The `0001` baseline plus the additive `0002` and `0003` migrations
+  /// compose to the canonical [`SCHEMA_SQL`]. `0001` is frozen; `0002` adds
+  /// the four provenance backend/platform columns; `0003` adds the
+  /// `watch_root` table. The only schema lines beyond the frozen baseline are
+  /// those additions.
   #[test]
   fn migrations_compose_to_schema() {
+    use super::MIGRATION_0003_WATCH_ROOT;
     // 0001 is the frozen baseline: it must NOT carry the provenance columns.
     assert!(
       !MIGRATION_0001_INIT.contains("voiceprint_provenance_backend"),
@@ -179,13 +186,11 @@ mod schema_tests {
         "fresh-create schema must define {col}"
       );
     }
-    // The ONLY non-blank lines the canonical schema has beyond the frozen
-    // baseline are the relocated provenance block: each adds a backend/
-    // platform column or one of its explanatory comment lines. The `person_id`
-    // line also differs — fresh-create now appends the provenance columns
-    // AFTER it (to match the additive 0002 ADD-COLUMN order), so it gained a
-    // trailing comma — but it is the same column, not drift. Nothing else has
-    // changed between the fresh-create schema and the migration baseline.
+    // 0003 creates the watch_root table.
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    // Non-blank lines in SCHEMA_SQL beyond the frozen baseline must be either
+    // the 0002 provenance block or the 0003 watch_root DDL.
     let added: Vec<&str> = schema_lines_added_since_0001()
       .into_iter()
       .filter(|l| !l.trim().is_empty())
@@ -204,8 +209,19 @@ mod schema_tests {
           || l.starts_with("-- forward-compatible")
           || l.starts_with("-- Appended AFTER person_id")
           || l.starts_with("-- the additive 0002")
-          || l.starts_with("-- (ADD COLUMN"),
-        "unexpected schema drift beyond the provenance block: {line:?}",
+          || l.starts_with("-- (ADD COLUMN")
+          || l.contains("watch_root")
+          || l.starts_with("id ")
+          || l.starts_with("location_volume")
+          || l.starts_with("location_path")
+          || l.starts_with("recursive ")
+          || l.starts_with("enabled ")
+          || l.starts_with("added_at_ms")
+          || l.starts_with("last_walked_at_ms")
+          || l.starts_with("walk_status")
+          || l.starts_with("UNIQUE")
+          || l.starts_with(");"),
+        "unexpected schema drift beyond the 0001+0002+0003 migrations: {line:?}",
       );
     }
   }
@@ -279,23 +295,39 @@ mod data_schema_tests {
 
   /// Mirror invariant from the data-cluster angle: the frozen `0001`
   /// baseline still defines the full data/attachment clusters, and the only
-  /// schema lines beyond it are the additive `0002` provenance columns —
-  /// the data/attachment DDL has not drifted between the two sources.
+  /// schema lines beyond it are the additive `0002` provenance columns plus
+  /// the `0003` `watch_root` table — the data/attachment DDL has not drifted.
   #[test]
   fn data_migration_mirror_matches_schema() {
+    use super::MIGRATION_0003_WATCH_ROOT;
     assert!(MIGRATION_0001_INIT.contains("CREATE TABLE IF NOT EXISTS data ("));
     assert!(MIGRATION_0001_INIT.contains("CREATE TABLE IF NOT EXISTS attachment ("));
+    // 0003 creates the watch_root table additively.
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
     for line in schema_lines_added_since_0001() {
-      // The only deltas are the relocated speaker provenance block: its four
-      // columns, its comment lines, and the `person_id` line (now carries a
-      // trailing comma since the provenance columns moved after it). The
-      // data/attachment cluster DDL itself has not drifted.
+      // Deltas beyond the frozen 0001 baseline:
+      //   0002: the four relocated speaker provenance columns + comment lines
+      //         + the `person_id` line (gained a trailing comma).
+      //   0003: the `watch_root` table DDL (CREATE TABLE + column lines).
+      let l = line.trim();
       assert!(
-        line.trim().is_empty()
-          || line.contains("voiceprint_provenance_")
-          || line.trim().starts_with("person_id")
-          || line.contains("--"),
-        "data/attachment schema must not drift from the 0001 baseline: {line:?}",
+        l.is_empty()
+          || l.contains("voiceprint_provenance_")
+          || l.starts_with("person_id")
+          || l.contains("--")
+          || l.contains("watch_root")
+          || l.starts_with("id ")
+          || l.starts_with("location_volume")
+          || l.starts_with("location_path")
+          || l.starts_with("recursive ")
+          || l.starts_with("enabled ")
+          || l.starts_with("added_at_ms")
+          || l.starts_with("last_walked_at_ms")
+          || l.starts_with("walk_status")
+          || l.starts_with("UNIQUE")
+          || l.starts_with(");"),
+        "unexpected schema drift beyond the 0001+0002+0003 migrations: {line:?}",
       );
     }
   }
