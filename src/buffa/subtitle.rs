@@ -93,7 +93,7 @@ fn opt_id_to_bytes(id: Option<&Uuid7>) -> Bytes {
   }
 }
 
-fn localized_text_to_wire_string(t: &LocalizedText) -> SmolStr {
+fn localized_text_to_wire_string(t: &LocalizedText) -> crate::buffa::SmolStrField {
   // Base `SubtitleCue.text` is the raw src text only — `translated`
   // rides on the wire `LocalizedText` form elsewhere. The per-format
   // detail messages keep their own untranslated `styled_text` field.

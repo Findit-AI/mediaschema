@@ -173,8 +173,8 @@ fn opt_msg<T: Default>(v: Option<T>) -> MessageField<T> {
 fn metadata_to_wire(d: &IndexMap<SmolStr, SmolStr>) -> Vec<wire1::KeyValue> {
   d.iter()
     .map(|(k, v)| wire1::KeyValue {
-      key: SmolStr::from(k.as_str()),
-      value: SmolStr::from(v.as_str()),
+      key: SmolStr::from(k.as_str()).into(),
+      value: SmolStr::from(v.as_str()).into(),
       __buffa_unknown_fields: Default::default(),
     })
     .collect()
@@ -328,7 +328,7 @@ mod tests {
     bag.insert(SmolStr::from("zz"), SmolStr::from("1"));
     bag.insert(SmolStr::from("aa"), SmolStr::from("2"));
     let w = metadata_to_wire(&bag);
-    assert_eq!(w[0].key, "zz");
+    assert_eq!(w[0].key, "zz".into());
     let back = metadata_from_wire(&w);
     assert_eq!(back, bag);
     assert!(back.get_index(0).is_some_and(|(k, _)| k == "zz"));

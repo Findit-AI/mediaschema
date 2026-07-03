@@ -6,6 +6,7 @@
 //! `VideoTrack` in rev 7; every `Scene` inside a `VideoTrack` shares
 //! the track's `Provenance`.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

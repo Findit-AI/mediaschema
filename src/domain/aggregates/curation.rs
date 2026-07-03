@@ -10,6 +10,7 @@
 //! fields (locked), everything user-editable lives here. Smart folders
 //! target `Scene` (locked SF-target = scene-level).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

@@ -12,6 +12,7 @@
 //! Many analysis VOs live in the sibling [`detections`](super::detections)
 //! module to keep this file focused on the aggregate itself.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;
@@ -658,6 +659,10 @@ mod tests {
     );
   }
 
+  // `Keyframe::rehydrate` is gated on all three medium features (it backs
+  // `crate::graph`, which is a whole-record type); this test needs the same
+  // gate the function itself carries.
+  #[cfg(all(feature = "audio", feature = "subtitle"))]
   #[test]
   fn role_and_scene_id_survive_into_parts_rehydrate() {
     let ts = Timestamp::new(0, tb());

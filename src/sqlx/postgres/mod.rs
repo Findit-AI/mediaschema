@@ -28,6 +28,7 @@ pub mod subtitle;
 #[cfg(feature = "video")]
 #[cfg_attr(docsrs, doc(cfg(feature = "video")))]
 pub mod video;
+pub mod watch_root;
 
 pub use attachment::{
   attachment_track_from_rows, PgAttachmentRow, PgAttachmentTrackIndexErrorRow,
@@ -66,6 +67,7 @@ pub use video::{
   PgKeyframeVlmLabelRow, PgSceneRow, PgVideoRow, PgVideoTrackIndexErrorRow,
   PgVideoTrackMetadataRow, PgVideoTrackRow,
 };
+pub use watch_root::{PgWatchRootRow, PgWatchRootRowRef};
 
 /// Canonical PostgreSQL DDL for the mediaschema tables this revision maps.
 pub const SCHEMA_SQL: &str = include_str!("schema.sql");
@@ -73,9 +75,22 @@ pub const SCHEMA_SQL: &str = include_str!("schema.sql");
 /// Initial migration mirror of [`SCHEMA_SQL`].
 pub const MIGRATION_0001_INIT: &str = include_str!("migrations/0001_init.sql");
 
+/// Additive migration: adds the voiceprint provenance backend + host
+/// platform columns to `speaker` (`ALTER TABLE ... ADD COLUMN IF NOT EXISTS`,
+/// all nullable). Apply after [`MIGRATION_0001_INIT`] to upgrade an existing
+/// database; [`SCHEMA_SQL`] already includes these columns for a fresh create.
+pub const MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM: &str =
+  include_str!("migrations/0002_provenance_backend_platform.sql");
+
+/// Additive migration that creates the `watch_root` table.
+pub const MIGRATION_0003_WATCH_ROOT: &str = include_str!("migrations/0003_watch_root.sql");
+
 #[cfg(all(test, feature = "video"))]
 mod schema_tests {
-  use super::{MIGRATION_0001_INIT, SCHEMA_SQL};
+  use super::{
+    MIGRATION_0001_INIT, MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM, MIGRATION_0003_WATCH_ROOT,
+    SCHEMA_SQL,
+  };
 
   #[test]
   fn schema_has_thumbnail_table_and_keyframe_fk() {
@@ -111,13 +126,40 @@ mod schema_tests {
 
   #[test]
   fn migration_mirror_matches_schema() {
-    assert_eq!(SCHEMA_SQL, MIGRATION_0001_INIT);
+    // 0001 is the frozen baseline; must NOT carry the provenance columns.
+    assert!(
+      !MIGRATION_0001_INIT.contains("voiceprint_provenance_backend"),
+      "0001 must stay frozen at the pre-provenance baseline",
+    );
+    // 0002 adds exactly the four columns, additively.
+    for col in [
+      "voiceprint_provenance_backend",
+      "voiceprint_provenance_platform_os",
+      "voiceprint_provenance_platform_arch",
+      "voiceprint_provenance_platform_os_version",
+    ] {
+      assert!(
+        MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM
+          .contains(&format!("ADD COLUMN IF NOT EXISTS {col}")),
+        "0002 must ALTER-add {col}",
+      );
+      assert!(
+        SCHEMA_SQL.contains(col),
+        "fresh-create schema must define {col}",
+      );
+    }
+    // 0003 creates the watch_root table.
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
   }
 }
 
 #[cfg(test)]
 mod data_schema_tests {
-  use super::{MIGRATION_0001_INIT, SCHEMA_SQL};
+  use super::{
+    MIGRATION_0001_INIT, MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM, MIGRATION_0003_WATCH_ROOT,
+    SCHEMA_SQL,
+  };
 
   #[test]
   fn schema_has_data_cluster_tables() {
@@ -146,6 +188,28 @@ mod data_schema_tests {
 
   #[test]
   fn data_migration_mirror_matches_schema() {
-    assert_eq!(SCHEMA_SQL, MIGRATION_0001_INIT);
+    // 0001 is the frozen baseline; 0003 adds the watch_root table.
+    assert!(MIGRATION_0001_INIT.contains("CREATE TABLE IF NOT EXISTS data ("));
+    assert!(MIGRATION_0001_INIT.contains("CREATE TABLE IF NOT EXISTS attachment ("));
+    assert!(MIGRATION_0003_WATCH_ROOT.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    assert!(SCHEMA_SQL.contains("CREATE TABLE IF NOT EXISTS watch_root ("));
+    // The four provenance columns exist in schema.sql and in migration 0002,
+    // NOT in the frozen 0001 baseline.
+    for col in [
+      "voiceprint_provenance_backend",
+      "voiceprint_provenance_platform_os",
+      "voiceprint_provenance_platform_arch",
+      "voiceprint_provenance_platform_os_version",
+    ] {
+      assert!(SCHEMA_SQL.contains(col), "schema must define {col}");
+      assert!(
+        !MIGRATION_0001_INIT.contains(col),
+        "{col} must not appear in the frozen 0001",
+      );
+      assert!(
+        MIGRATION_0002_PROVENANCE_BACKEND_PLATFORM.contains(col),
+        "existing databases must receive {col} via 0002",
+      );
+    }
   }
 }

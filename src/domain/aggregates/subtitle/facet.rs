@@ -11,6 +11,7 @@
 //! (`schema/README.md` "Indexing model-correction") is the canonical
 //! definition in [`crate::domain::vo`], reused here by every facet.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

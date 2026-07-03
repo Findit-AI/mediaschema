@@ -12,6 +12,7 @@
 //! layer. The domain type enforces only intrinsic single-value invariants
 //! (here: non-nil `id` / `media_id`).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

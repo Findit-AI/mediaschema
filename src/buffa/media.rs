@@ -203,13 +203,13 @@ impl From<&Media<Uuid7>> for wire::Media {
 
     let (device_make, device_model) = match d.device_ref() {
       Some(dev) => (dev.make().to_owned().into(), dev.model().to_owned().into()),
-      None => (SmolStr::default(), SmolStr::default()),
+      None => (SmolStr::default().into(), SmolStr::default().into()),
     };
 
     // GPS → ISO 6709 string (empty when absent).
     let gps_location = match d.gps_ref() {
       Some(g) => g.to_iso6709().into(),
-      None => SmolStr::default(),
+      None => SmolStr::default().into(),
     };
 
     wire::Media {

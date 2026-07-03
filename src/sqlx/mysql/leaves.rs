@@ -14,7 +14,7 @@ use crate::{
       speaker::SpeakerError,
       watched_location::WatchedLocationError,
     },
-    vo::{Provenance, VoiceFingerprint},
+    vo::{Backend, Platform, Provenance, VoiceFingerprint},
     ErrorCode, ErrorInfo, Rgba, ScanStatus, SceneAnnotation, Speaker, UserTag, Uuid7,
     WatchedLocation,
   },
@@ -47,6 +47,14 @@ pub struct MySqlSpeakerRow {
   pub voiceprint_provenance_indexer_version: Option<String>,
   /// Cross-track identity FK → `person.id`; NULL = not yet identified.
   pub person_id: Option<Vec<u8>>,
+  /// `Backend::to_i32()` of the voiceprint model's backend; NULL =
+  /// not recorded (decodes to `Backend::Unspecified`). Stored as `SMALLINT`
+  /// to match the crate's enum-discriminant column convention (cf.
+  /// `last_reconcile_status`).
+  pub voiceprint_provenance_backend: Option<i16>,
+  pub voiceprint_provenance_platform_os: Option<String>,
+  pub voiceprint_provenance_platform_arch: Option<String>,
+  pub voiceprint_provenance_platform_os_version: Option<String>,
 }
 
 impl From<&Speaker<Uuid7>> for MySqlSpeakerRow {
@@ -68,6 +76,25 @@ impl From<&Speaker<Uuid7>> for MySqlSpeakerRow {
       voiceprint_provenance_prompt_version: prov.map(|p| p.prompt_version().to_owned()),
       voiceprint_provenance_indexer_version: prov.map(|p| p.indexer_version().to_owned()),
       person_id: s.person_id_ref().map(|p| p.as_bytes().to_vec()),
+      // NULL = not-recorded discriminator: encode Unspecified / empty-string
+      // as NULL rather than Some(0) / Some("") so `IS NULL` audits are
+      // consistent with pre-migration rows (empty-as-absent, per-field).
+      voiceprint_provenance_backend: prov.and_then(|p| {
+        let b = p.backend();
+        (!b.is_unspecified()).then(|| b.to_i32() as i16)
+      }),
+      voiceprint_provenance_platform_os: prov.and_then(|p| {
+        let os = p.platform_ref().os();
+        (!os.is_empty()).then(|| os.to_owned())
+      }),
+      voiceprint_provenance_platform_arch: prov.and_then(|p| {
+        let arch = p.platform_ref().arch();
+        (!arch.is_empty()).then(|| arch.to_owned())
+      }),
+      voiceprint_provenance_platform_os_version: prov.and_then(|p| {
+        let os_version = p.platform_ref().os_version();
+        (!os_version.is_empty()).then(|| os_version.to_owned())
+      }),
     }
   }
 }
@@ -89,7 +116,16 @@ impl TryFrom<MySqlSpeakerRow> for Speaker<Uuid7> {
         r.voiceprint_provenance_model_version.unwrap_or_default(),
         r.voiceprint_provenance_prompt_version.unwrap_or_default(),
         r.voiceprint_provenance_indexer_version.unwrap_or_default(),
-      );
+      )
+      .with_backend(Backend::from_i32(
+        r.voiceprint_provenance_backend.unwrap_or(0) as i32,
+      ))
+      .with_platform(Platform::from_parts(
+        r.voiceprint_provenance_platform_os.unwrap_or_default(),
+        r.voiceprint_provenance_platform_arch.unwrap_or_default(),
+        r.voiceprint_provenance_platform_os_version
+          .unwrap_or_default(),
+      ));
       s = s.with_voiceprint(VoiceFingerprint::from_parts(
         vector_id,
         dimensions,
@@ -122,6 +158,10 @@ pub struct MySqlSpeakerRowRef<'r> {
   pub voiceprint_provenance_prompt_version: Option<&'r str>,
   pub voiceprint_provenance_indexer_version: Option<&'r str>,
   pub person_id: Option<&'r [u8]>,
+  pub voiceprint_provenance_backend: Option<i16>,
+  pub voiceprint_provenance_platform_os: Option<&'r str>,
+  pub voiceprint_provenance_platform_arch: Option<&'r str>,
+  pub voiceprint_provenance_platform_os_version: Option<&'r str>,
 }
 
 impl MySqlSpeakerRow {
@@ -142,6 +182,12 @@ impl MySqlSpeakerRow {
       voiceprint_provenance_prompt_version: self.voiceprint_provenance_prompt_version.as_deref(),
       voiceprint_provenance_indexer_version: self.voiceprint_provenance_indexer_version.as_deref(),
       person_id: self.person_id.as_deref(),
+      voiceprint_provenance_backend: self.voiceprint_provenance_backend,
+      voiceprint_provenance_platform_os: self.voiceprint_provenance_platform_os.as_deref(),
+      voiceprint_provenance_platform_arch: self.voiceprint_provenance_platform_arch.as_deref(),
+      voiceprint_provenance_platform_os_version: self
+        .voiceprint_provenance_platform_os_version
+        .as_deref(),
     }
   }
 }
@@ -163,7 +209,16 @@ impl<'r> TryFrom<MySqlSpeakerRowRef<'r>> for Speaker<Uuid7> {
         r.voiceprint_provenance_model_version.unwrap_or_default(),
         r.voiceprint_provenance_prompt_version.unwrap_or_default(),
         r.voiceprint_provenance_indexer_version.unwrap_or_default(),
-      );
+      )
+      .with_backend(Backend::from_i32(
+        r.voiceprint_provenance_backend.unwrap_or(0) as i32,
+      ))
+      .with_platform(Platform::from_parts(
+        r.voiceprint_provenance_platform_os.unwrap_or_default(),
+        r.voiceprint_provenance_platform_arch.unwrap_or_default(),
+        r.voiceprint_provenance_platform_os_version
+          .unwrap_or_default(),
+      ));
       s = s.with_voiceprint(VoiceFingerprint::from_parts(
         vector_id,
         dimensions,
@@ -425,7 +480,7 @@ pub struct MySqlWatchedLocationRow {
   pub last_error_message: Option<String>,
 }
 
-fn scan_status_to_i16(s: ScanStatus) -> i16 {
+pub(crate) fn scan_status_to_i16(s: ScanStatus) -> i16 {
   match s {
     ScanStatus::Ok => 0,
     ScanStatus::Partial => 1,
@@ -433,7 +488,7 @@ fn scan_status_to_i16(s: ScanStatus) -> i16 {
   }
 }
 
-fn scan_status_from_i16(n: i16) -> Result<ScanStatus, SqlxError> {
+pub(crate) fn scan_status_from_i16(n: i16) -> Result<ScanStatus, SqlxError> {
   match n {
     0 => Ok(ScanStatus::Ok),
     1 => Ok(ScanStatus::Partial),
@@ -611,6 +666,40 @@ mod tests {
   }
 
   #[test]
+  fn speaker_roundtrip_voiceprint_provenance_backend_platform() {
+    use crate::domain::{Backend, Platform};
+    let provenance = Provenance::from_parts("ecapa-tdnn", "v1.0.0", "", "idx-0.1")
+      .with_backend(Backend::Onnx)
+      .with_platform(Platform::from_parts("macos", "aarch64", "15.5"));
+    let voiceprint =
+      VoiceFingerprint::try_new(Uuid7::new(), 192, ts(), Some(0.83), provenance).unwrap();
+    let s = Speaker::try_new(Uuid7::new(), Uuid7::new(), 1, "Jane")
+      .unwrap()
+      .with_voiceprint(voiceprint.clone());
+
+    // Owned round-trip preserves backend + platform.
+    let row: MySqlSpeakerRow = (&s).into();
+    let s2: Speaker<Uuid7> = row.clone().try_into().unwrap();
+    assert_eq!(
+      s2.voiceprint_ref().unwrap().provenance_ref().backend(),
+      Backend::Onnx,
+    );
+    assert_eq!(
+      s2.voiceprint_ref()
+        .unwrap()
+        .provenance_ref()
+        .platform_ref()
+        .os(),
+      "macos",
+    );
+    assert_eq!(s2.voiceprint_ref(), Some(&voiceprint));
+
+    // Borrowed (RowRef) round-trip is identical.
+    let s3: Speaker<Uuid7> = row.as_ref().try_into().unwrap();
+    assert_eq!(s3.voiceprint_ref(), Some(&voiceprint));
+  }
+
+  #[test]
   fn user_tag_roundtrip() {
     let t = UserTag::try_new(Uuid7::new(), "v", ts())
       .unwrap()
@@ -732,6 +821,10 @@ mod tests {
       voiceprint_provenance_prompt_version: None,
       voiceprint_provenance_indexer_version: None,
       person_id: None,
+      voiceprint_provenance_backend: None,
+      voiceprint_provenance_platform_os: None,
+      voiceprint_provenance_platform_arch: None,
+      voiceprint_provenance_platform_os_version: None,
     };
     assert!(Speaker::<Uuid7>::try_from(row)
       .unwrap_err()

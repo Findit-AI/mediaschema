@@ -283,7 +283,7 @@ mod tests {
   fn language_roundtrip_concrete_tag() {
     let d = Language::from_bcp47("zh-Hant-TW").unwrap();
     let w: wire::Language = (&d).into();
-    assert_eq!(w.bcp47, "zh-Hant-TW");
+    assert_eq!(w.bcp47, "zh-Hant-TW".into());
     let d2 = Language::try_from(&w).unwrap();
     assert_eq!(d, d2);
   }
@@ -291,7 +291,7 @@ mod tests {
   #[test]
   fn language_empty_bcp47_decodes_as_undetermined() {
     let w = wire::Language {
-      bcp47: SmolStr::default(),
+      bcp47: SmolStr::default().into(),
       __buffa_unknown_fields: Default::default(),
     };
     let d = Language::try_from(&w).unwrap();
@@ -310,7 +310,7 @@ mod tests {
   #[test]
   fn language_malformed_bcp47_errors() {
     let w = wire::Language {
-      bcp47: SmolStr::from("xx-yy-zz-bogus"),
+      bcp47: SmolStr::from("xx-yy-zz-bogus").into(),
       __buffa_unknown_fields: Default::default(),
     };
     let err = Language::try_from(&w).unwrap_err();

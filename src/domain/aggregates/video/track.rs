@@ -8,6 +8,7 @@
 //! `Provenance` (rev 7 hoist — replaces per-`Scene`/per-`Keyframe`
 //! provenance).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

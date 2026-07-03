@@ -197,7 +197,7 @@ mod tests {
     let d = ErrorInfo::new(ErrorCode::ProbeCorrupt, "bad header");
     let w = wire::ErrorInfo::from(&d);
     assert_eq!(w.code, 1000);
-    assert_eq!(w.message, "bad header");
+    assert_eq!(w.message, "bad header".into());
     let d2 = ErrorInfo::from(&w);
     assert_eq!(d2, d);
   }
@@ -206,14 +206,14 @@ mod tests {
   fn error_info_unknown_code_round_trips_verbatim() {
     let w = wire::ErrorInfo {
       code: 99_999,
-      message: SmolStr::from("future code"),
+      message: SmolStr::from("future code").into(),
       __buffa_unknown_fields: Default::default(),
     };
     let d = ErrorInfo::from(&w);
     assert!(d.code().is_unknown());
     let w2 = wire::ErrorInfo::from(&d);
     assert_eq!(w2.code, 99_999);
-    assert_eq!(w2.message, "future code");
+    assert_eq!(w2.message, "future code".into());
   }
 
   #[test]

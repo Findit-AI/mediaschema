@@ -130,6 +130,16 @@ CREATE TABLE IF NOT EXISTS speaker (
     voiceprint_provenance_indexer_version VARCHAR(256),
     -- Cross-track identity FK -> person.id; NULL = not yet identified.
     person_id                             BINARY(16),
+    -- Inference backend + host platform the voiceprint model ran on.
+    -- NULL = not recorded (decodes to Backend::Unspecified / empty Platform);
+    -- forward-compatible for rows written before these columns existed.
+    -- Appended AFTER person_id so a fresh create matches the column order
+    -- the additive 0002 `ALTER TABLE speaker ADD COLUMN` migration produces
+    -- (ADD COLUMN always appends after every pre-existing column).
+    voiceprint_provenance_backend             SMALLINT,
+    voiceprint_provenance_platform_os         VARCHAR(256),
+    voiceprint_provenance_platform_arch       VARCHAR(256),
+    voiceprint_provenance_platform_os_version VARCHAR(256),
     PRIMARY KEY (id),
     KEY idx_speaker_audio_track_id (audio_track_id),
     KEY idx_speaker_person_id (person_id)
@@ -1214,4 +1224,19 @@ CREATE TABLE IF NOT EXISTS subtitle_track_vob_sub_palette (
     entry15             BIGINT     NOT NULL,
     PRIMARY KEY (id),
     KEY idx_subtitle_track_vob_sub_palette_track_id (subtitle_track_id)
+);
+
+CREATE TABLE IF NOT EXISTS watch_root (
+    id                 BINARY(16) NOT NULL,
+    location_volume    BINARY(16) NOT NULL,
+    location_path      TEXT       NOT NULL,
+    location_path_hash BINARY(32) NOT NULL,
+    recursive          TINYINT    NOT NULL DEFAULT 0,
+    enabled            TINYINT    NOT NULL DEFAULT 0,
+    added_at_ms        BIGINT     NOT NULL,
+    last_walked_at_ms  BIGINT,
+    walk_status        SMALLINT,
+    PRIMARY KEY (id),
+    UNIQUE KEY idx_watch_root_path        (location_volume, location_path_hash),
+    KEY        idx_watch_root_path_prefix (location_volume, location_path)
 );

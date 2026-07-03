@@ -549,7 +549,7 @@ pub struct SqliteWatchedLocationRow {
   pub last_error_message: Option<String>,
 }
 
-fn scan_status_to_i64(s: ScanStatus) -> i64 {
+pub(crate) fn scan_status_to_i64(s: ScanStatus) -> i64 {
   match s {
     ScanStatus::Ok => 0,
     ScanStatus::Partial => 1,
@@ -557,7 +557,7 @@ fn scan_status_to_i64(s: ScanStatus) -> i64 {
   }
 }
 
-fn scan_status_from_i64(n: i64) -> Result<ScanStatus, SqlxError> {
+pub(crate) fn scan_status_from_i64(n: i64) -> Result<ScanStatus, SqlxError> {
   match n {
     0 => Ok(ScanStatus::Ok),
     1 => Ok(ScanStatus::Partial),

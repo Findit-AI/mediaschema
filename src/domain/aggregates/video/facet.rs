@@ -20,6 +20,7 @@
 //! `tracks` Vec to satisfy a derived count). The domain type enforces
 //! only intrinsic single-value invariants (here: non-nil `id`).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;
@@ -224,6 +225,10 @@ mod tests {
     assert!(v.cover_keyframe_id_ref().is_none(), "no cover by default");
   }
 
+  // `Video::rehydrate` is gated on all three medium features (it backs
+  // `crate::graph`, which is a whole-record type); this test needs the same
+  // gate the function itself carries.
+  #[cfg(all(feature = "audio", feature = "subtitle"))]
   #[test]
   fn cover_keyframe_id_builds_and_round_trips() {
     let cover = Uuid7::new();

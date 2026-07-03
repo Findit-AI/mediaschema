@@ -7,6 +7,7 @@
 //! `""` means absent; where it is open-vocab VLM natural-language output,
 //! the type is `LocalizedText` (locked rev 14/15 rule).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use bytes::Bytes;

@@ -75,8 +75,8 @@ impl From<&Chapter<Uuid7>> for wire::Chapter {
       .metadata_ref()
       .iter()
       .map(|(k, v)| wire::KeyValue {
-        key: ::buffa::smol_str::SmolStr::from(k.as_str()),
-        value: ::buffa::smol_str::SmolStr::from(v.as_str()),
+        key: SmolStr::from(k.as_str()).into(),
+        value: SmolStr::from(v.as_str()).into(),
         __buffa_unknown_fields: Default::default(),
       })
       .collect();
@@ -87,7 +87,7 @@ impl From<&Chapter<Uuid7>> for wire::Chapter {
       index: c.index(),
       source_id: c.source_id(),
       time_range: ::buffa::MessageField::some(*c.time_range_ref()),
-      title: ::buffa::smol_str::SmolStr::from(c.title()),
+      title: SmolStr::from(c.title()).into(),
       metadata,
       __buffa_unknown_fields: Default::default(),
     }

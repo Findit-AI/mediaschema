@@ -9,6 +9,7 @@
 //!
 //! `Provenance` is per-track (on `AudioTrack`), not per segment.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

@@ -12,6 +12,7 @@
 //! and cue positions are `mediatime::Timestamp` (track-relative
 //! offsets, same as the locked `Speaker`).
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

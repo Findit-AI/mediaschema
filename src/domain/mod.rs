@@ -39,7 +39,8 @@ pub use primitives::{ErrorCode, FileChecksum, Rgba, Uuid7};
 // are on.
 #[cfg(any(feature = "std", feature = "alloc"))]
 pub use aggregates::{
-  Media, MediaFile, Person, PersonConfidence, SceneAnnotation, Speaker, UserTag, WatchedLocation,
+  Media, MediaFile, Person, PersonConfidence, SceneAnnotation, Speaker, UserTag, WatchRoot,
+  WatchRootError, WatchedLocation,
 };
 // Medium-specific aggregate re-exports. Gated on `std AND <medium>`
 // because every `*Track` now reaches `IndexMap<SmolStr, SmolStr>` for

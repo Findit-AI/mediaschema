@@ -131,7 +131,7 @@ impl From<&WatchedLocation<Uuid7>> for wire::WatchedLocation {
       location: ::buffa::MessageField::some(location),
       // NOTE(buffa-bridge): wire-only fields default to "absent"
       // (proto3 zero) — the locked domain doesn't model them.
-      name: SmolStr::default(),
+      name: SmolStr::default().into(),
       status: 0,
       created_at,
       deleted_at: None,

@@ -87,6 +87,7 @@ pub mod util;
 #[cfg(feature = "video")]
 #[cfg_attr(docsrs, doc(cfg(feature = "video")))]
 pub mod video;
+pub mod watch_root;
 
 pub use error::MongoError;
 pub use indexes::{all_indexes, CollectionName};

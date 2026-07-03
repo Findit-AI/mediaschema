@@ -37,6 +37,7 @@
 //! `&mut Self` so they chain). `try_new` is the validating constructor;
 //! nil `id` and nil `checksum` are rejected.
 
+#[cfg(any(feature = "std", feature = "alloc"))]
 use std::vec::Vec;
 
 use derive_more::IsVariant;

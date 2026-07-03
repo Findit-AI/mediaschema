@@ -186,7 +186,7 @@ fn video_track_from_wire(
     .try_with_duration(w.duration.as_option().copied())
     .map_err(rejected)?
     .with_codec(codec)
-    .with_profile(w.profile.clone())
+    .with_profile(w.profile.clone().map(Into::into))
     .with_level(level)
     .with_bit_rate(w.bit_rate)
     .with_nb_frames(w.nb_frames)
