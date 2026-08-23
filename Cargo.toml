@@ -121,7 +121,7 @@ sqlx-sqlite   = ["std", "dep:sqlx", "sqlx/sqlite", "sqlx/uuid"]
 # the codegen uses heap types).
 buffa = { version = "0.8", default-features = false, optional = true }
 buffa-types = { version = "0.8", default-features = false, optional = true }
-mediatime = { version = "0.1", default-features = false, features = ["buffa"] }
+mediatime = { version = "0.3", default-features = false, features = ["buffa"] }
 # Shared media-stream descriptor vocabulary (codec / pixel-format / colour /
 # frame / audio / subtitle / capture / language). Optional, pulled in by the
 # heap tiers (`alloc`/`std`) since every mediaframe-typed field lives on a
@@ -204,7 +204,7 @@ bson = { version = "3", optional = true, default-features = false, features = ["
 [dev-dependencies]
 serde_json = "1"
 buffa = { version = "0.8", default-features = false, features = ["std"] }
-mediatime = { version = "0.1", default-features = false, features = ["buffa"] }
+mediatime = { version = "0.3", default-features = false, features = ["buffa"] }
 # `mediaframe` / `smol_str` as dev-deps so the integration tests in
 # `tests/` can construct domain aggregates (`SubtitleTrack`) through the
 # public API exactly as a downstream consumer would — building
